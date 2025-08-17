@@ -805,6 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial Load
     loadScore();
     // Show the initial start screen.
-    // showScreen(startScreen);
-    showScreen(winScreen);
+    showScreen(startScreen);
+    // showScreen(winScreen);
 });
+
