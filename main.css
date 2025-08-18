@@ -1,0 +1,1048 @@
+/* Basic Setup & Theming */
+:root {
+    --squid-pink: #E83F6F;
+    --squid-teal: #00A896;
+    --squid-dark: #1A1A1A;
+    --squid-light: #F0F3F5;
+    --font-title: 'Bebas Neue', cursive;
+    --font-body: 'Lato', sans-serif;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-body);
+    background-color: var(--squid-dark);
+    color: var(--squid-light);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Screen Management */
+.screen {
+    display: flex; /* Always flex to allow centering */
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    position: absolute; /* Stack screens on top of each other */
+    top: 0;
+    left: 0;
+    opacity: 0;
+    visibility: hidden; /* Hide from screen readers and interaction */
+    transition: opacity 0.5s ease-in-out, visibility 0s 0.5s; /* Delay visibility change */
+}
+
+.screen.active {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s; /* Show immediately */
+    z-index: 2; /* Bring active screen to the front */
+}
+
+.screen .content {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(232, 63, 111, 0.5);
+}
+
+/* Override for the animated win screen */
+#win-screen .content {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2; /* Ensure content is above the confetti layer */
+}
+
+h1 {
+    font-family: var(--font-title);
+    font-size: 4rem;
+    color: var(--squid-pink);
+    margin: 0 0 10px 0;
+    letter-spacing: 5px;
+    text-shadow: 0 0 10px var(--squid-pink); /* Add a glow */
+}
+
+p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+}
+
+button {
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+    padding: 10px 40px;
+    border: 2px solid var(--squid-pink);
+    background-color: transparent;
+    color: var(--squid-pink);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 2px;
+}
+
+button:hover {
+    background-color: var(--squid-pink);
+    color: var(--squid-light);
+    transform: scale(1.05); /* Add scaling effect */
+    box-shadow: 0 0 15px var(--squid-pink); /* Add glow on hover */
+}
+
+button:active { /* Add active state for click feedback */
+    transform: scale(0.98);
+    transition-duration: 0.1s;
+}
+
+/* Container for multiple menu buttons */
+.button-container {
+    display: flex;
+    gap: 20px; /* Space between buttons */
+}
+
+/* Start Screen Specifics */
+#start-screen .logo {
+    margin-bottom: 20px;
+}
+
+.shape {
+    display: inline-block;
+    border: 3px solid var(--squid-light);
+    margin: 0 5px;
+}
+
+.circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+}
+
+.triangle {
+    width: 0;
+    height: 0;
+    border: 0; /* Reset the border from the .shape class */
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 30px solid var(--squid-light);
+    background-color: transparent;
+}
+
+.square {
+    width: 30px;
+    height: 30px;
+}
+
+/* Game Screen */
+#game-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    /* --- Round 1 (Day) Theme --- */
+    background: linear-gradient(to top, #d2b48c 0%, #b5956d 30%, #a0e9ff 70%, #87CEFA 100%); /* Brighter Day */
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22100%22%20height%3D%22100%22%20viewBox%3D%220%200%20100%22%3E%3Cpath%20d%3D%22M0%200h100v100H0z%22%20fill%3D%22%23d2b48c%22%2F%3E%3Cpath%20d%3D%22M11%2011h78v78H11z%22%20fill-opacity%3D%22.02%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E');
+    overflow: hidden;
+    /* Add transition for the zoom effect */
+    transform: scale(1.2); /* Start slightly zoomed out */
+    transition: transform 1s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Class to trigger the zoom-in effect */
+#game-container.zoomed-in {
+    transform: scale(1);
+}
+
+/* Vignette effect for atmosphere */
+#game-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    box-shadow: inset 0 0 80px rgba(0,0,0,0.5);
+    z-index: 15; /* Above doll/player but below UI */
+    pointer-events: none; /* Allow clicks to pass through */
+}
+
+/* Throbbing effect for when player is near the finish line */
+@keyframes throbbing-vignette {
+    0% { box-shadow: inset 0 0 80px rgba(0,0,0,0.5), inset 0 0 0px var(--squid-pink); }
+    50% { box-shadow: inset 0 0 100px rgba(0,0,0,0.6), inset 0 0 40px 10px rgba(232, 63, 111, 0.3); }
+    100% { box-shadow: inset 0 0 80px rgba(0,0,0,0.5), inset 0 0 0px var(--squid-pink); }
+}
+
+#game-container.near-finish::before {
+    animation: throbbing-vignette 1.2s infinite ease-in-out;
+}
+
+.game-ui-top {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 25;
+    pointer-events: none; /* Let clicks go through to the game area */
+}
+
+.game-ui-top > * {
+    pointer-events: auto; /* Re-enable pointer events for the UI elements */
+}
+
+.ui-left-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px; /* Adds space between timer and round display */
+}
+
+.game-area {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+#timer {
+    position: static; /* Now controlled by flexbox */
+    font-family: var(--font-title);
+    font-size: 2.5rem;
+    color: var(--squid-light);
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 5px 15px;
+    border-radius: 5px;
+}
+
+#status-light {
+    position: static; /* Now controlled by flexbox */
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 20px var(--squid-teal); }
+    50% { box-shadow: 0 0 30px 5px var(--squid-teal); }
+    100% { box-shadow: 0 0 20px var(--squid-teal); }
+}
+
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 20px var(--squid-pink); }
+    50% { box-shadow: 0 0 35px 8px var(--squid-pink); }
+    100% { box-shadow: 0 0 20px var(--squid-pink); }
+}
+
+@keyframes pulse-red-medium {
+    0% { box-shadow: 0 0 25px var(--squid-pink); }
+    50% { box-shadow: 0 0 40px 10px var(--squid-pink); }
+    100% { box-shadow: 0 0 25px var(--squid-pink); }
+}
+
+#status-light.green {
+    background-color: var(--squid-teal);
+    animation: pulse-green 2s infinite;
+}
+
+#status-light.red {
+    background-color: var(--squid-pink);
+    animation: pulse-red 1s infinite;
+}
+
+/* --- Round 2 Status Light --- */
+body.round-2 #status-light.red {
+    animation-name: pulse-red-medium;
+    animation-duration: 0.75s;
+}
+
+/* --- Round 2 (Evening) Theme --- */
+body.round-2 #game-container {
+    background: linear-gradient(to top, #6b553b 0%, #4a3b2a 30%, #d35400 70%, #f39c12 100%); /* Fiery Sunset */
+}
+
+body.round-2 #game-container::before {
+    box-shadow: inset 0 0 130px 15px rgba(45, 25, 55, 0.7); /* Darker, purplish vignette */
+}
+
+#timer.warning {
+    color: #FFD700; /* Warning yellow */
+    animation: pulse-yellow 1.5s infinite;
+}
+
+/* --- Round 3 (Night) Theme --- */
+body.round-3 #game-container {
+    /* Starry night sky */
+    background-color: #0f2027;
+    background-image: 
+        radial-gradient(white 0.5px, transparent 0.5px),
+        radial-gradient(white 0.5px, transparent 0.5px),
+        linear-gradient(to top, #2c2c2c 0%, #1a1a1a 30%, #0f2027 70%, #203a43 100%); /* Darker ground */
+    background-size: 100px 100px, 150px 150px, 100% 100%;
+    background-position: 0 0, 75px 75px, 0 0;
+    animation: stars-twinkle 200s linear infinite;
+}
+
+body.round-3 #game-container::before {
+    box-shadow: inset 0 0 150px 25px rgba(0, 0, 0, 0.9); /* Very strong, dark vignette */
+}
+
+body.round-3 #finish-line {
+    box-shadow: 0 0 20px #fff, 0 0 30px #fff, 0 0 40px var(--squid-teal);
+}
+
+@keyframes pulse-red-intense {
+    0% { box-shadow: 0 0 20px var(--squid-pink); }
+    50% { box-shadow: 0 0 45px 15px var(--squid-pink); }
+    100% { box-shadow: 0 0 20px var(--squid-pink); }
+}
+
+body.round-3 #status-light.red {
+    animation-name: pulse-red-intense;
+    animation-duration: 0.5s; /* Faster, more aggressive pulse */
+}
+
+@keyframes screen-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    50% { transform: translateX(2px); }
+    75% { transform: translateX(-2px); }
+}
+
+@keyframes stars-twinkle {
+    from { background-position: 0 0, 75px 75px, 0 0; }
+    to { background-position: -10000px 5000px, -10000px 5000px, 0 0; }
+}
+
+#round-display {
+    font-family: var(--font-title);
+    font-size: 2.5rem;
+    color: var(--squid-light);
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 5px 15px;
+    border-radius: 5px;
+}
+
+body.round-3 #round-display {
+    color: var(--squid-pink);
+    text-shadow: 0 0 5px var(--squid-pink);
+}
+
+#instructions {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+    color: var(--squid-light);
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px 0;
+    z-index: 25;
+}
+
+/* --- Ggangbu Intro Screen --- */
+#ggangbu-intro-screen {
+    /* Evoke the sunset theme of the marble game episode */
+    background: linear-gradient(to top, #6b553b 0%, #4a3b2a 30%, #d35400 70%, #f39c12 100%);
+    /* Add a subtle animation to the background */
+    animation: slow-pan 15s ease-in-out infinite alternate;
+}
+
+@keyframes slow-pan {
+    from { background-position: 0% 50%; }
+    to { background-position: 100% 50%; }
+}
+
+#ggangbu-intro-screen .content {
+    background: transparent;
+    box-shadow: none;
+    /* Add a vignette to focus on the text */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: inset 0 0 150px 25px rgba(0, 0, 0, 0.8);
+}
+
+#ggangbu-quote-text {
+    font-size: 2.5rem; /* Make it a bit larger */
+    font-style: italic;
+    max-width: 70%; /* Keep lines from getting too long */
+    text-shadow: 0 2px 15px rgba(0, 0, 0, 1); /* Deeper shadow for readability */
+    opacity: 0;
+    transform: scale(1.05); /* Start slightly larger */
+    transition: opacity 2s ease-in-out, transform 2s ease-in-out; /* Slower, more dramatic fade */
+}
+
+#ggangbu-quote-text.visible { opacity: 1; transform: scale(1); }
+
+#fog-layer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 200%; /* Wider to allow for horizontal movement */
+    height: 40%;
+    background: linear-gradient(to top, rgba(200, 200, 210, 0.15), transparent);
+    z-index: 20; /* Above game area, below player/doll */
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    animation: drift 80s linear infinite alternate;
+    pointer-events: none;
+}
+
+body.round-3 #fog-layer { opacity: 1; }
+
+#finish-line {
+    position: absolute;
+    top: 15%;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 10px #fff;
+}
+
+#player, #player2 {
+    position: absolute;
+    bottom: 5%;
+    width: 30px; /* Slightly smaller for better proportion */
+    height: 55px;
+    transition: bottom 0.1s linear, transform 0.5s ease-out, opacity 0.5s ease-in;
+    z-index: 5;
+    transform: translateX(-50%); /* Initial transform */
+    border-radius: 10px 10px 0 0; /* Rounded shoulders */
+    /* Add a subtle glow to pop from the background */
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.4));
+}
+
+/* Player 1 Specifics */
+#player {
+    left: 48%; /* Nudge to the left of center */
+    background-color: #00C9A7; /* A brighter tracksuit color to stand out */
+    border: 2px solid #006b5b; /* Corresponding darker outline */
+}
+
+/* Player 2 Specifics */
+#player2 {
+    left: 52%; /* Nudge to the right of center */
+    background-color: #00C9A7; /* Same tracksuit color as Player 1 */
+    border: 2px solid #006b5b; /* Same border as Player 1 */
+    display: none; /* Hidden by default, JS will manage visibility */
+}
+
+/* Player head */
+#player::before,
+#player2::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: #f5cda7; /* Skin tone */
+    border-radius: 50%;
+    border: 2px solid #a57d54;
+}
+
+/* Player stripes on tracksuits */
+#player::after,
+#player2::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 5px;
+    width: 4px;
+    height: 35px;
+}
+
+/* Differentiate Player 1 with a red stripe */
+#player::after {
+    background-color: var(--squid-pink); /* Red color */
+    box-shadow: 0 0 6px rgba(232, 63, 111, 0.9); /* Red glow */
+}
+/* Differentiate Player 2 with a gold stripe */
+#player2::after {
+    background-color: #FFD700; /* Gold color */
+    box-shadow: 0 0 6px rgba(255, 215, 0, 0.9); /* Gold glow */
+}
+
+/* Player/NPC Number Styling */
+.player-number {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #222;
+    font-family: var(--font-title);
+    font-size: 18px;
+    padding: 0 8px;
+    border-radius: 3px;
+    line-height: 1.2;
+}
+
+/* More dynamic running animation */
+@keyframes run-cycle {
+    0% { transform: translateX(-50%) translateY(0) rotate(-2deg); }
+    50% { transform: translateX(-50%) translateY(-8px) scaleY(1.05) rotate(0deg); }
+    100% { transform: translateX(-50%) translateY(0) rotate(2deg); }
+}
+
+#player.moving,
+#player2.moving {
+    animation: run-cycle 0.4s infinite ease-in-out;
+}
+
+/* --- NPC Players --- */
+.npc-player {
+    position: absolute;
+    width: 30px;
+    height: 55px;
+    transition: bottom 0.2s linear, transform 0.5s ease-out, opacity 0.5s ease-in;
+    z-index: 4; /* Behind the main player */
+    transform: translateX(-50%);
+    background-color: #00897B; /* Slightly different tracksuit color */
+    border-radius: 10px 10px 0 0;
+    border: 2px solid #004d40;
+}
+
+.npc-player::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: #f5cda7;
+    border-radius: 50%;
+    border: 2px solid #a57d54;
+}
+
+.npc-player::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 5px;
+    width: 4px;
+    height: 35px;
+    background-color: var(--squid-light);
+}
+
+.npc-player.moving {
+    animation: run-cycle 0.4s infinite ease-in-out;
+}
+
+.npc-player.fallen {
+    transform-origin: bottom center;
+    transition: transform 0.6s cubic-bezier(0.6, -0.28, 0.74, 0.05), opacity 0.6s ease-out;
+    z-index: 3; /* Fall behind everyone */
+}
+
+/* Elimination animation */
+@keyframes fall-down {
+    0% { transform: translateX(-50%) rotate(0deg); opacity: 1; }
+    100% { transform: translateX(-80%) rotate(-90deg) translateY(100px); opacity: 0; }
+}
+
+#player.eliminated,
+#player2.eliminated {
+    animation: fall-down 0.7s forwards ease-in;
+}
+
+/* --- Guards --- */
+.guard {
+    position: absolute;
+    width: 40px;
+    height: 90px;
+    background-color: var(--squid-pink);
+    border: 2px solid #a12c4d;
+    border-radius: 5px;
+    z-index: 2; /* Behind NPCs and player */
+    transform: translateX(-50%);
+}
+
+.guard::before { /* Head */
+    content: '';
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 30px;
+    background-color: #111;
+    border: 2px solid #000;
+    border-radius: 5px;
+}
+
+.guard::after { /* Mask Symbol */
+    content: '';
+    position: absolute;
+    top: -19px; /* Position on the mask */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: white;
+}
+
+.guard.circle::after {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.guard.triangle::after {
+    width: 0;
+    height: 0;
+    background-color: transparent;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 12px solid white;
+}
+
+.guard.square::after {
+    width: 11px;
+    height: 11px;
+}
+
+#doll {
+    position: absolute;
+    top: 5%;
+    left: 50%;
+    width: 80px;
+    height: 120px;
+    transform: translateX(-50%) rotateY(0deg); /* Default state is facing away */
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Snappier turn */
+    z-index: 10;
+    /* Add a subtle, ominous shadow */
+    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+    /* CSS Doll Styling */
+    background-color: #f2d600; /* Yellow dress */
+    border-radius: 10px 10px 0 0; /* Rounded shoulders */
+    border: 3px solid #a0522d; /* Dress outline */
+}
+
+/* Increase doll turn speed in later rounds */
+body.round-2 #doll {
+    transition-duration: 0.25s;
+}
+body.round-3 #doll {
+    transition-duration: 0.2s;
+}
+
+/* Doll's head - Default state is the BACK of the head */
+#doll::before {
+    content: '';
+    position: absolute;
+    top: -35px;
+    left: 50%;
+    width: 50px; height: 50px; border-radius: 50%;
+    background-color: #3d3d3d; /* Hair color */
+    border: 3px solid #2a2a2a; /* Darker hair outline */
+    box-shadow: 0 -15px 0 0 #3d3d3d; /* Only top hair, no pigtails */
+    transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out, transform 0.5s ease-out; /* Separate transform transition */
+    transform: translateX(-50%) rotateY(var(--head-rotate-y, 0deg)); /* Add for head tracking */
+}
+
+/* Doll's dress - Default state is the BACK (no orange shirt) */
+#doll::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background-color: #f2d600; /* Match the yellow dress color */
+    border-bottom: none;
+    transition: all 0.1s ease-in-out;
+}
+
+#doll.looking {
+    transform: translateX(-50%) rotateY(180deg);
+}
+
+/* This is now the FRONT of the head (the face) */
+#doll.looking::before {
+    background-color: #f5cda7; /* Skin tone */
+    border-color: #a0522d;
+    box-shadow: 0 -15px 0 0 #3d3d3d, /* Top hair */
+                -25px 5px 0 -5px #3d3d3d, /* Left pigtail */
+                25px 5px 0 -5px #3d3d3d; /* Right pigtail */
+}
+
+/* Glowing eyes for Round 3 */
+body.round-3 #doll.looking::before {
+    box-shadow: inset 5px 2px 4px -2px #ff1111, inset -5px 2px 4px -2px #ff1111, /* Eyes */
+                0 -15px 0 0 #3d3d3d, /* Top hair */
+                -25px 5px 0 -5px #3d3d3d, /* Left pigtail */
+                25px 5px 0 -5px #3d3d3d; /* Right pigtail */
+    border-color: #6b4a3b; /* Darker border for night */
+}
+
+/* This is now the FRONT of the dress (with orange shirt) */
+#doll.looking::after {
+    background-color: #ff7f50; /* Orange shirt */
+    border-bottom: 3px solid #a0522d;
+}
+
+/* Dramatic flicker effect for "ELIMINATED" text */
+@keyframes flicker {
+    0%, 100% {
+        text-shadow:
+            0 0 4px var(--squid-pink),
+            0 0 11px var(--squid-pink),
+            0 0 19px var(--squid-pink),
+            0 0 40px var(--squid-pink);
+    }
+    5%, 15%, 25%, 35%, 45%, 55%, 65%, 75%, 85%, 95% {
+        text-shadow: none;
+    }
+    10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90% {
+        text-shadow: none;
+    }
+}
+
+#game-over-screen h1 {
+    animation: flicker 1.5s infinite alternate;
+    color: #fff; /* Make the base color white for better glow effect */
+}
+
+/* --- Coffin on Game Over Screen --- */
+.coffin {
+    position: relative;
+    width: 250px;
+    height: 120px;
+    background-color: #1a1a1a;
+    border: 3px solid #000;
+    border-radius: 5px;
+    margin: 0 auto 30px auto; /* Center it and add space below */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    transform: scale(0); /* Start hidden */
+    opacity: 0;
+}
+
+/* Trigger the animation when the game over screen is active */
+#game-over-screen.active .coffin {
+    animation: pop-in-coffin 0.8s 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+}
+
+@keyframes pop-in-coffin {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.ribbon-v, .ribbon-h {
+    position: absolute;
+    background-color: var(--squid-pink);
+    box-shadow: 0 0 5px rgba(232, 63, 111, 0.7);
+    z-index: 1; /* Above coffin base */
+}
+
+.ribbon-v { /* Vertical part */
+    top: 0;
+    left: 50%;
+    width: 20px;
+    height: 100%;
+    transform: translateX(-50%);
+}
+
+.ribbon-h { /* Horizontal part */
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    transform: translateY(-50%);
+}
+
+.bow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    transform: translate(-50%, -50%);
+    z-index: 2; /* Above ribbons */
+}
+
+/* Creating the bow shape using pseudo-elements */
+.bow::before, .bow::after {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 30px;
+    background-color: var(--squid-pink);
+    border: 2px solid #a12c4d;
+    border-radius: 50% 50% 0 0;
+}
+
+.bow::before {
+    top: -20px;
+    left: -35px;
+    transform: rotate(-45deg);
+}
+
+.bow::after {
+    top: -20px;
+    right: -35px;
+    transform: rotate(45deg);
+}
+
+@keyframes pulse-yellow {
+    0% { text-shadow: 0 0 5px #FFD700; }
+    50% { text-shadow: 0 0 15px #FFD700; }
+    100% { text-shadow: 0 0 5px #FFD700; }
+}
+
+@keyframes drift {
+    from { transform: translateX(-25%); }
+    to { transform: translateX(0%); }
+}
+
+/* --- Win Screen Envelope Animation --- */
+.envelope-container {
+    position: relative;
+    width: 400px;
+    height: 280px;
+    margin-bottom: 40px;
+}
+
+.envelope-container::before,
+.envelope-container::after {
+    content: '';
+    position: absolute;
+    background-color: var(--squid-pink);
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    z-index: 11; /* Above envelope */
+}
+
+.envelope-container::before { /* Vertical ribbon */
+    top: 0;
+    left: 50%;
+    width: 25px;
+    height: 100%;
+    transform: translateX(-50%);
+}
+
+.envelope-container::after { /* Horizontal ribbon */
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 25px;
+    transform: translateY(-50%);
+}
+
+.envelope {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--squid-dark);
+    border: 2px solid #444;
+    border-radius: 5px;
+    display: flex;
+    box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.2);
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: translateY(20px); /* Start slightly down */
+    opacity: 0; /* Start invisible */
+    background: #fdf5e6; /* Cream/Ivory cardstock */
+    color: var(--squid-dark);
+    border-radius: 10px;
+    padding: 20px;
+    box-sizing: border-box;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    overflow: hidden; /* Add this to contain the shine effect */
+}
+
+.card h1, .card p {
+    color: var(--squid-dark);
+    text-shadow: none;
+}
+
+/* The shine effect element */
+.card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%; /* Start completely off-screen to the left */
+    width: 40%;
+    height: 100%;
+    transform: skewX(-25deg); /* Angle the shine */
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none; /* Make sure it doesn't interfere with clicks */
+}
+
+.envelope .logo {
+    transform: scale(0.8);
+}
+
+.envelope .logo .shape {
+    border-color: var(--squid-pink);
+    box-shadow: 0 0 5px var(--squid-pink);
+}
+
+.envelope .logo .triangle {
+    border-bottom-color: var(--squid-pink);
+    border-left-color: transparent;
+    border-right-color: transparent;
+    background-color: transparent; /* Ensure no background bleed */
+}
+
+.delayed-fade-in { opacity: 0; }
+
+@keyframes slide-up-and-away {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-150%); opacity: 0; }
+}
+@keyframes fade-in-card {
+    0% { transform: translateY(20px) scale(0.95); opacity: 0; }
+    80% { transform: translateY(-5px) scale(1.02); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes fade-in-win {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes card-shine {
+    from { left: -150%; }
+    to { left: 150%; }
+}
+@keyframes fade-out-ribbon {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* New continuous animation for the victory card */
+@keyframes victory-card-float {
+    0%, 100% {
+        transform: translateY(0) rotateZ(-1deg) scale(1);
+        box-shadow: 0 15px 25px rgba(0,0,0,0.4), 0 0 15px rgba(255, 215, 0, 0.6);
+    }
+    50% {
+        /* The card floats up, rotates the other way, scales up, and glows brighter */
+        transform: translateY(-15px) rotateZ(1deg) scale(1.02);
+        box-shadow: 0 25px 40px rgba(0,0,0,0.5), 0 0 30px rgba(255, 215, 0, 0.9);
+    }
+}
+
+@keyframes blink-red {
+    0%, 100% {
+        color: #ff4141;
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+#timer.red-light-pause span {
+    animation: blink-red 1s infinite;
+}
+
+#win-screen.active .envelope { animation: slide-up-and-away 0.8s 1s forwards cubic-bezier(0.5, 0, 0.75, 0); }
+#win-screen.active .card { 
+    animation: 
+        fade-in-card 0.8s 1.2s forwards ease-out, /* First, the card appears */
+        victory-card-float 4s 2.2s infinite ease-in-out; /* Then, it starts its continuous float */
+}
+#win-screen.active .card::after { animation: card-shine 0.75s 2.4s ease-in-out; } /* Trigger the shine after the card appears */
+#win-screen.active .delayed-fade-in { animation: fade-in-win 0.5s 2.2s forwards; }
+#win-screen.active .envelope-container::before,
+#win-screen.active .envelope-container::after {
+    animation: fade-out-ribbon 0.5s 0.5s forwards;
+}
+
+/* --- Red Light Arena Effect --- */
+#red-light-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--squid-pink);
+    opacity: 0;
+    z-index: 14; /* Above player/doll, below vignette/fog */
+    pointer-events: none;
+    mix-blend-mode: multiply; /* This will create a much darker, more ominous effect */
+}
+
+@keyframes red-alert-blink {
+    50% { opacity: 0.6; } /* Increased opacity for a stronger effect */
+}
+
+@keyframes red-alert-blink-intense {
+    50% { opacity: 0.75; } /* Even stronger effect */
+}
+
+/* Arena flash for Round 2 */
+body.round-2 #game-container.arena-red-alert #red-light-overlay {
+    animation: red-alert-blink 0.15s infinite step-end; /* Much faster blinking */
+}
+
+/* More intense arena flash and screen shake for Round 3 */
+body.round-3 #game-container.arena-red-alert #red-light-overlay {
+    animation: red-alert-blink-intense 0.1s infinite step-end; /* Frantic blinking */
+}
+
+body.round-3 #game-container.arena-red-alert {
+    animation: screen-shake 0.1s infinite;
+}
+
+/* --- Victory Confetti --- */
+#confetti-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1; /* Behind the main win screen content */
+}
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 20px;
+    background: linear-gradient(135deg, #ffd700, #f0e68c, #daa520); /* Shiny gold gradient */
+    top: -20px; /* Start above the screen */
+    opacity: 0;
+    animation: confetti-fall 5s linear infinite;
+}
+
+@keyframes confetti-fall {
+    0% { transform: translateY(0) rotateX(0) rotateY(0) rotateZ(0); opacity: 1; }
+    100% { transform: translateY(110vh) rotateX(720deg) rotateY(1080deg) rotateZ(var(--rotate-z-end, 360deg)); opacity: 0.5; }
+}
