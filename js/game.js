@@ -248,8 +248,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // We just need to ensure other tracks are stopped.
             stopBackgroundMusic();
             stopTenseMusic();
+        } else if (screen === roundCompleteScreen) {
+            // Do nothing with the music here. This allows the tense music to
+            // continue playing seamlessly from the end of round 2 into round 3.
         } else {
-            // For start, game over, and round complete screens, play the default theme.
+            // For start and game over screens, stop all special themes and play the default.
             stopTenseMusic();
             stopVictoryMusic();
             playBackgroundMusic();
