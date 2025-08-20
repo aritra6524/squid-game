@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const instructions = document.getElementById('instructions');
     const ggangbuQuoteText = document.getElementById('ggangbu-quote-text');
     const confettiContainer = document.getElementById('confetti-container');
+    const mobileControls = document.getElementById('mobile-controls');
+    const mobileControlP1 = document.getElementById('mobile-control-p1');
 
     // Audio Elements
     const songAudio = document.getElementById('song-audio');
@@ -431,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
             player2.style.opacity = '1';
             player2.style.transform = 'translateX(-50%)';
             assignPlayerNumber(player2, usedPlayerNumbers);
-            instructions.innerHTML = "Stay close to your Ggangbu! Don't get separated.<br>P1: Hold [SPACE] &nbsp;&nbsp;|&nbsp;&nbsp; P2: Hold [ARROW UP]";
+            instructions.innerHTML = "Stay close to your Ggangbu!<br>P1: Hold [SPACE] &nbsp;&nbsp;|&nbsp;&nbsp; P2: Hold [ARROW UP]";
         } else {
             player2.style.display = 'none';
             instructions.innerHTML = "Press and hold [SPACE] to run";
@@ -472,6 +474,22 @@ document.addEventListener('DOMContentLoaded', () => {
         assignPlayerNumber(player, usedPlayerNumbers);
         updateRoundDisplay();
         showScreen(gameScreen);
+
+        // --- Temporary Mobile Instructions ---
+        // Only show detailed button text for the very first round of a new game.
+        // We check visibility by seeing if the display style is 'flex'.
+        if (currentRound === 1 && window.getComputedStyle(mobileControls).display === 'flex') {
+            const originalP1Text = mobileControlP1.innerHTML;
+
+            // Add a class for styling the instructional text
+            mobileControlP1.classList.add('instruction-text');
+            mobileControlP1.innerHTML = 'HOLD TO RUN';
+
+            setTimeout(() => {
+                mobileControlP1.classList.remove('instruction-text');
+                mobileControlP1.innerHTML = originalP1Text;
+            }, 4000); // Show for 4 seconds
+        }
 
         // Start the NPC footsteps loop, muted. The gameLoop will manage its volume.
         npcFootstepsAudio.volume = 0;
@@ -1039,6 +1057,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // --- Mobile Touch Controls ---
+    // Use a function to handle the start logic to avoid code duplication
+    const handleMoveStart = (playerNum) => {
+        if (!gameActive) return;
+
+        if (playerNum === 1 && !playerIsMoving && !player1Finished) {
+            playerIsMoving = true;
+            player.classList.add('moving');
+            playFootsteps();
+        } else if (playerNum === 2 && gameMode === 'ggangbu' && !player2IsMoving && !player2Finished) {
+            player2IsMoving = true;
+            player2.classList.add('moving');
+            playFootsteps(footstepsAudio2);
+        }
+    };
+
+    // Use a function to handle the stop logic
+    const handleMoveEnd = (playerNum) => {
+        if (playerNum === 1 && playerIsMoving) {
+            playerIsMoving = false;
+            player.classList.remove('moving');
+            stopFootsteps();
+        } else if (playerNum === 2 && gameMode === 'ggangbu' && player2IsMoving) {
+            player2IsMoving = false;
+            player2.classList.remove('moving');
+            stopFootsteps(footstepsAudio2);
+        }
+    };
+
+    mobileControlP1.addEventListener('touchstart', (e) => { e.preventDefault(); handleMoveStart(1); });
+    mobileControlP1.addEventListener('touchend', (e) => { e.preventDefault(); handleMoveEnd(1); });
+    mobileControlP1.addEventListener('touchcancel', (e) => { e.preventDefault(); handleMoveEnd(1); }); // Handle interruption
+
     // --- UI Sound Event Listeners ---
     document.querySelectorAll('button').forEach(button => {
         button.addEventListener('mouseenter', playHoverSound);
