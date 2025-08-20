@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const DIFFICULTY = {
         1: { time: 40, songSpeed: 1.0, redMin: 2.5, redMax: 4.0 }, // Standard speed and pauses
         2: { time: 32, songSpeed: 1.25, redMin: 2.0, redMax: 3.5 }, // Faster song, shorter pauses
-        3: { time: 30, greenMin: 1.2, greenMax: 3.0, redMin: 1.0, redMax: 3.0 }  // Special: silent, very fast and random light changes
+        3: { time: 30, greenMin: 1.2, greenMax: 2, redMin: 1.0, redMax: 3.0 }  // Special: silent, very fast and random light changes
     };
 
     // Game State
