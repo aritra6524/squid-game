@@ -63,9 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Difficulty settings per round. Red light randomness increases each round.
     // Green light is fixed for R1/R2 for authenticity, but random in R3 for a final challenge.
     const DIFFICULTY = {
-        1: { time: 40, redMin: 2.5, redMax: 4.0 }, // Longer, more predictable pauses
-        2: { time: 32, redMin: 1.8, redMax: 4.5 }, // Shorter, more random pauses
-        3: { time: 25, greenMin: 1.0, greenMax: 5.0, redMin: 1.2, redMax: 4.0 }  // Special: silent and random green light
+        1: { time: 40, songSpeed: 1.0, redMin: 2.5, redMax: 4.0 }, // Standard speed and pauses
+        2: { time: 32, songSpeed: 1.25, redMin: 2.0, redMax: 3.5 }, // Faster song, shorter pauses
+        3: { time: 30, greenMin: 1.2, greenMax: 3.0, redMin: 1.0, redMax: 3.0 }  // Special: silent, very fast and random light changes
     };
 
     // Game State
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let usedPlayerNumbers = new Set();
 
     // --- Audio Helper ---
-    function playAudio(audioElement) {
+    function playAudio(audioElement, playbackRate = 1.0) {
         // Ensure audio is not muted and volume is up
         audioElement.muted = false;
         // To make the tense music feel louder, we lower other primary sounds when it's active,
@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             audioElement.volume = isTenseMusicPlaying ? 0.5 : 1.0;
         }
+        audioElement.playbackRate = playbackRate;
         audioElement.currentTime = 0;
         
         const playPromise = audioElement.play();
@@ -614,10 +615,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!gameActive) return;
 
         const difficulty = DIFFICULTY[currentRound];
-        // In rounds 1 & 2, green light duration is fixed to the song length for authenticity.
+        // In rounds 1 & 2, green light duration is fixed to the song length.
+        // The song is sped up in later rounds, making the green light phase shorter.
         // Round 3 is special (silent and random) for a different challenge.
         const greenLightDuration = currentRound < 3
-            ? SONG_DURATION * 1000
+            ? (SONG_DURATION * 1000) / difficulty.songSpeed
             : (Math.random() * (difficulty.greenMax - difficulty.greenMin) + difficulty.greenMin) * 1000;
         const redLightDuration = (Math.random() * (difficulty.redMax - difficulty.redMin) + difficulty.redMin) * 1000;
 
@@ -626,7 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const songStarter = () => {
             // In Round 3, the doll is silent for maximum tension.
             if (gameActive && lightIsGreen && currentRound < 3) {
-                playAudio(songAudio);
+                playAudio(songAudio, difficulty.songSpeed);
             }
         };
 
