@@ -44,18 +44,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const clickAudio = document.getElementById('click-audio');
 
     // Game Constants
-    const PLAYER_SPEED = 0.3; // % per animation frame
+    const PLAYER_SPEED = 0.18; // % per animation frame
     const WIN_POSITION = 85; // % from bottom
+    const SONG_DURATION = 3.0; // Approx. duration of the doll's song in seconds.
     const THROB_THRESHOLD = 70; // % from bottom to start throbbing effect
     const TOTAL_ROUNDS = 3;
     const NPC_COUNT = 25;
     const MAX_NPC_FOOTSTEPS_VOLUME = 0.4; // More prominent crowd sound
 
-    // Difficulty settings per round: { time, greenMin, greenMax, redMin, redMax }
+    // Ggangbu Mode Constants
+    const GGANGBU_MAX_DISTANCE = 15; // % of screen height players can be apart
+    const GGANGBU_BOOST_DISTANCE = 4;  // % of screen height to be for a boost
+    const GGANGBU_BOOST_MULTIPLIER = 1.15;
+    const GGANGBU_PENALTY_MULTIPLIER = 0.6;
+    const GGANGBU_STRAIN_ELIMINATION_CHANCE = 0.25; // 25% chance to be eliminated if strained during red light
+    // Difficulty settings per round. Red light randomness increases each round.
+    // Green light is fixed for R1/R2 for authenticity, but random in R3 for a final challenge.
     const DIFFICULTY = {
-        1: { time: 45, greenMin: 2.5, greenMax: 4.5, redMin: 2.0, redMax: 3.5 },
-        2: { time: 35, greenMin: 2.0, greenMax: 3.5, redMin: 1.5, redMax: 3.0 },
-        3: { time: 25, greenMin: 1.5, greenMax: 2.5, redMin: 1.0, redMax: 2.0 }
+        1: { time: 40, redMin: 2.5, redMax: 4.0 }, // Longer, more predictable pauses
+        2: { time: 32, redMin: 1.8, redMax: 4.5 }, // Shorter, more random pauses
+        3: { time: 25, greenMin: 1.0, greenMax: 5.0, redMin: 1.2, redMax: 4.0 }  // Special: silent and random green light
     };
 
     // Game State
@@ -82,8 +90,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function playAudio(audioElement) {
         // Ensure audio is not muted and volume is up
         audioElement.muted = false;
-        // To make the tense music feel louder, we lower other primary sounds when it's active.
-        audioElement.volume = isTenseMusicPlaying ? 0.5 : 1.0;
+        // To make the tense music feel louder, we lower other primary sounds when it's active,
+        // but we want the core game sounds (red/green light) to remain prominent.
+        if (audioElement === greenLightAudio || audioElement === redLightAudio) {
+            audioElement.volume = 1.0; // Always play these at full volume
+        } else {
+            audioElement.volume = isTenseMusicPlaying ? 0.5 : 1.0;
+        }
         audioElement.currentTime = 0;
         
         const playPromise = audioElement.play();
@@ -347,9 +360,9 @@ document.addEventListener('DOMContentLoaded', () => {
     async function startGgangbuSequence() {
         const quote1 = "A Gganbu is a good friend. One you can trust completely.";
         const quote2 = "We're partners. We stick together until the end.";
-        const quoteVisibleDuration = 5000; // How long each quote stays visible
-        const quoteFadeDuration = 2000;    // How long it takes to fade out
-        const pauseBetweenQuotes = 1000;   // Pause between quotes
+        const quoteVisibleDuration = 2500; // How long each quote stays visible
+        const quoteFadeDuration = 1000;    // How long it takes to fade out
+        const pauseBetweenQuotes = 500;   // Pause between quotes
 
         showScreen(ggangbuIntroScreen);
         playEmotionalMusic();
@@ -371,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // End sequence
         stopEmotionalMusic();
-        await sleep(1000); // Wait for music to fade out
+        await sleep(500); // Wait for music to fade out
         initGame(1, 'ggangbu');
     }
 
@@ -400,25 +413,25 @@ document.addEventListener('DOMContentLoaded', () => {
         createGuards();
 
         // Clean up any lingering sound listeners
-        gunshotAudio.removeEventListener('ended', playBackgroundMusic);
+        gunshotAudio.removeEventListener('ended', playBackgroundMusic); // This line seems to be a mistake in the original code, but I'll leave it as is.
 
         // Reset player visual state
-        player.style.bottom = '5%';
+        player.style.bottom = '12%';
         player.style.zIndex = 5;
-        player.classList.remove('moving', 'eliminated');
+        player.classList.remove('moving', 'eliminated', 'strained', 'boosted');
         player.style.opacity = '1';
         player.style.transform = 'translateX(-50%)';
         
         // Reset player 2 visual state and visibility
         if (gameMode === 'ggangbu') {
             player2.style.display = 'block';
-            player2.style.bottom = '5%';
+            player2.style.bottom = '12%';
             player2.style.zIndex = 5;
-            player2.classList.remove('moving', 'eliminated');
+            player2.classList.remove('moving', 'eliminated', 'strained', 'boosted');
             player2.style.opacity = '1';
             player2.style.transform = 'translateX(-50%)';
             assignPlayerNumber(player2, usedPlayerNumbers);
-            instructions.innerHTML = "P1: Hold [SPACE] &nbsp;&nbsp;|&nbsp;&nbsp; P2: Hold [ARROW UP]";
+            instructions.innerHTML = "Stay close to your Ggangbu! Don't get separated.<br>P1: Hold [SPACE] &nbsp;&nbsp;|&nbsp;&nbsp; P2: Hold [ARROW UP]";
         } else {
             player2.style.display = 'none';
             instructions.innerHTML = "Press and hold [SPACE] to run";
@@ -477,6 +490,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // New game loop for handling continuous movement
     function gameLoop() {
         if (!gameActive) return; // Stop loop if game is not active
+
+        if (gameMode === 'ggangbu') {
+            updateGgangbuStatus();
+        }
+
         if (playerIsMoving) {
             movePlayer(player, 1);
         }
@@ -490,6 +508,38 @@ document.addEventListener('DOMContentLoaded', () => {
         updateNpcs();
         manageNpcFootsteps();
         animationFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    // --- Ggangbu Mode Logic ---
+    function updateGgangbuStatus() {
+        if (player1Finished || player2Finished) {
+            // If one player finishes, the bond is broken, no more penalties/boosts
+            player.classList.remove('strained', 'boosted');
+            player2.classList.remove('strained', 'boosted');
+            return;
+        }
+
+        const p1Bottom = parseFloat(player.style.bottom);
+        const p2Bottom = parseFloat(player2.style.bottom);
+        const distance = Math.abs(p1Bottom - p2Bottom);
+
+        if (distance > GGANGBU_MAX_DISTANCE) {
+            // Strained: too far apart
+            player.classList.add('strained');
+            player2.classList.add('strained');
+            player.classList.remove('boosted');
+            player2.classList.remove('boosted');
+        } else if (distance < GGANGBU_BOOST_DISTANCE && playerIsMoving && player2IsMoving) {
+            // Boosted: close together and both running
+            player.classList.add('boosted');
+            player2.classList.add('boosted');
+            player.classList.remove('strained');
+            player2.classList.remove('strained');
+        } else {
+            // Normal: in a safe distance
+            player.classList.remove('strained', 'boosted');
+            player2.classList.remove('strained', 'boosted');
+        }
     }
 
     function updateDollHeadTracking() {
@@ -546,7 +596,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!gameActive) return;
 
         const difficulty = DIFFICULTY[currentRound];
-        const greenLightDuration = (Math.random() * (difficulty.greenMax - difficulty.greenMin) + difficulty.greenMin) * 1000;
+        // In rounds 1 & 2, green light duration is fixed to the song length for authenticity.
+        // Round 3 is special (silent and random) for a different challenge.
+        const greenLightDuration = currentRound < 3
+            ? SONG_DURATION * 1000
+            : (Math.random() * (difficulty.greenMax - difficulty.greenMin) + difficulty.greenMin) * 1000;
         const redLightDuration = (Math.random() * (difficulty.redMax - difficulty.redMin) + difficulty.redMin) * 1000;
 
         // This function starts the song after the "Green Light" voice line ends.
@@ -606,12 +660,23 @@ document.addEventListener('DOMContentLoaded', () => {
             // Check if player was moving when light turned red
             let playerCaught = false;
             let caughtMessage = "";
+            const p1Strained = player.classList.contains('strained');
+            const p2Strained = gameMode === 'ggangbu' && player2.classList.contains('strained');
+
             if (playerIsMoving) {
                 playerCaught = true;
                 caughtMessage = gameMode === 'ggangbu' ? "Player 1 moved during Red Light!" : "You moved during Red Light.";
+            } else if (gameMode === 'ggangbu' && p1Strained && Math.random() < GGANGBU_STRAIN_ELIMINATION_CHANCE) {
+                playerCaught = true;
+                caughtMessage = "Player 1 was eliminated for being too far from their Ggangbu!";
+                playerIsMoving = true; // Set to true to trigger elimination animation
             } else if (gameMode === 'ggangbu' && player2IsMoving) {
                 playerCaught = true;
                 caughtMessage = "Player 2 moved during Red Light!";
+            } else if (gameMode === 'ggangbu' && p2Strained && Math.random() < GGANGBU_STRAIN_ELIMINATION_CHANCE) {
+                playerCaught = true;
+                caughtMessage = "Player 2 was eliminated for being too far from their Ggangbu!";
+                player2IsMoving = true; // Set to true to trigger elimination animation
             }
             if (playerCaught) {
                 endGame(false, caughtMessage);
@@ -644,9 +709,18 @@ document.addEventListener('DOMContentLoaded', () => {
             endGame(false, message);
             return;
         }
+
+        let speedMultiplier = 1.0;
+        if (gameMode === 'ggangbu') {
+            if (pElement.classList.contains('strained')) {
+                speedMultiplier = GGANGBU_PENALTY_MULTIPLIER;
+            } else if (pElement.classList.contains('boosted')) {
+                speedMultiplier = GGANGBU_BOOST_MULTIPLIER;
+            }
+        }
     
         const currentBottom = parseFloat(pElement.style.bottom);
-        const newBottom = currentBottom + PLAYER_SPEED;
+        const newBottom = currentBottom + (PLAYER_SPEED * speedMultiplier);
         pElement.style.bottom = `${newBottom}%`;
     
         // Add throbbing effect when close to the finish line
@@ -682,7 +756,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function endGame(isWin, message = "") {
         if (!gameActive) return; // Prevent multiple calls
         gameActive = false; // This will stop the gameLoop from processing movement
-        player.classList.remove('moving');
+        player.classList.remove('moving', 'strained', 'boosted');
+        if (gameMode === 'ggangbu') {
+            player2.classList.remove('moving', 'strained', 'boosted');
+        }
         gameContainer.classList.remove('arena-red-alert'); // Stop arena blinking
         gameContainer.classList.remove('near-finish'); // Always remove the throb effect on game end
         timerDisplay.parentElement.classList.remove('red-light-pause'); // Stop timer blinking
@@ -801,9 +878,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const npcElement = document.createElement('div');
             npcElement.className = 'npc-player';
             
-            // Constrain NPCs to the central play area, away from the guards
-            const startLeft = Math.random() * 70 + 15; // 15% to 85%
-            const startBottom = Math.random() * 3 + 2; // 2% to 5%
+            // Constrain NPCs to the central play area, away from the guards.
+            const startLeft = Math.random() * 70 + 15;   // 15% to 85%
+            const startBottom = Math.random() * 3 + 9; // 9% to 12%, to match new player start
             npcElement.style.left = `${startLeft}%`;
             npcElement.style.bottom = `${startBottom}%`;
             npcElement.style.filter = `brightness(${Math.random() * 0.4 + 0.8})`; // 80% to 120%
