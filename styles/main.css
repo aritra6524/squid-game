@@ -111,6 +111,11 @@ button:active { /* Add active state for click feedback */
     margin-bottom: 20px;
 }
 
+/* Hide mobile-specific text by default */
+.mobile-text {
+    display: none;
+}
+
 .shape {
     display: inline-block;
     border: 3px solid var(--squid-light);
@@ -1070,4 +1075,220 @@ body.round-3 #doll.looking::before {
 @keyframes confetti-fall {
     0% { transform: translateY(0) rotateX(0) rotateY(0) rotateZ(0); opacity: 1; }
     100% { transform: translateY(110vh) rotateX(720deg) rotateY(1080deg) rotateZ(var(--rotate-z-end, 360deg)); opacity: 0.5; }
+}
+
+/* ==========================================================================
+   8. RESPONSIVE & MOBILE STYLES
+   ========================================================================== */
+
+#mobile-controls {
+    display: none; /* Hidden by default on desktop */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+    z-index: 100;
+    pointer-events: none; /* Container doesn't block, only buttons do */
+    justify-content: center; /* Center the single button */
+}
+
+.mobile-control-button {
+    font-family: var(--font-title);
+    font-size: 1.8rem;
+    padding: 20px;
+    border: 3px solid var(--squid-pink);
+    transition: background-color 0.2s, transform 0.2s, font-size 0.3s ease-out;
+    background-color: rgba(232, 63, 111, 0.5);
+    color: var(--squid-light);
+    cursor: pointer;
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent; /* Remove blue tap highlight on iOS */
+    user-select: none; /* Prevent text selection on long press */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mobile-control-button:active {
+    background-color: rgba(232, 63, 111, 0.8);
+    transform: scale(0.95);
+}
+
+/* Style for when buttons show instructions at the start of a round */
+.mobile-control-button.instruction-text {
+    font-size: 1.1rem; /* Smaller font for more text */
+    letter-spacing: 1px;
+    line-height: 1.2;
+}
+
+
+/* Media query for tablets and phones */
+@media (max-width: 1024px) {
+    /* Show mobile controls on touch-enabled devices or small screens */
+    #game-screen.active #mobile-controls {
+        display: flex;
+    }
+
+    /* Swap button text for mobile */
+    #start-hana-button .desktop-text {
+        display: none;
+    }
+
+    #start-hana-button .mobile-text {
+        display: inline;
+    }
+
+    #instructions {
+        display: none; /* Hide distracting instructions on mobile */
+    }
+
+    /* Hide Ggangbu mode button on smaller screens */
+    #start-ggangbu-button {
+        display: none;
+    }
+}
+
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 3rem;
+        letter-spacing: 3px;
+    }
+
+    p {
+        font-size: 1rem;
+    }
+
+    button {
+        font-size: 1.2rem;
+        padding: 10px 25px;
+    }
+
+    .button-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .screen .content {
+        padding: 20px;
+        width: 85%;
+        box-sizing: border-box;
+    }
+
+    /* Game UI adjustments */
+    .game-ui-top {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+    }
+
+    #timer, #round-display {
+        font-size: 1.8rem;
+        padding: 5px 10px;
+    }
+
+    #status-light {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Game Actor adjustments */
+    #player, #player2, .npc-player { width: 24px; height: 44px; }
+    #player::before, #player2::before, .npc-player::before { width: 16px; height: 16px; top: -12px; }
+    .player-number { font-size: 14px; }
+    #doll { width: 60px; height: 90px; }
+    #doll::before { width: 40px; height: 40px; top: -28px; }
+    .guard { width: 30px; height: 70px; }
+    .guard::before { width: 24px; height: 24px; top: -20px; }
+
+    /* Menu Screens */
+    .coffin { width: 200px; height: 100px; }
+    .envelope-container { width: 90%; max-width: 320px; height: auto; aspect-ratio: 400 / 280; }
+    #ggangbu-quote-text { font-size: 1.8rem; max-width: 90%; }
+}
+
+@media (max-width: 480px) {
+    h1 { font-size: 2.5rem; }
+    .screen .content { padding: 15px; }
+    #timer, #round-display { font-size: 1.5rem; }
+    .mobile-control-button { width: 80px; height: 80px; font-size: 1.5rem; }
+}
+
+/* Landscape mode on mobile devices */
+@media (orientation: landscape) and (max-height: 500px) {
+    #mobile-controls {
+        justify-content: flex-end; /* Move button to the right */
+        padding-right: 5vw; /* Use viewport width for responsive gap */
+        padding-bottom: 4vh; /* Use viewport height for responsive gap */
+    }
+
+    /* Make game elements smaller for a "zoomed-out" feel in landscape */
+    #timer, #round-display {
+        font-size: 1.5rem;
+        padding: 4px 8px;
+    }
+
+    #status-light {
+        width: 35px;
+        height: 35px;
+    }
+
+    /* Game Actor adjustments for landscape */
+    #player, #player2, .npc-player {
+        width: 20px;
+        height: 38px;
+    }
+    #player::before, #player2::before, .npc-player::before {
+        width: 14px;
+        height: 14px;
+        top: -10px;
+    }
+    /* Adjust player stripes to match smaller character size */
+    #player::after, #player2::after, .npc-player::after {
+        top: 7px;
+        left: 3px;
+        width: 3px;
+        height: 24px;
+    }
+    .player-number {
+        font-size: 11px;
+        padding: 0 4px;
+        top: 12px;
+    }
+    #doll {
+        width: 50px;
+        height: 75px;
+    }
+    #doll::before {
+        width: 34px;
+        height: 34px;
+        top: -24px;
+    }
+    .guard { width: 25px; height: 60px; }
+    .guard::before { width: 20px; height: 20px; top: -18px; }
+
+    /* --- Adjust Menu Screens for Landscape --- */
+    .screen .content {
+        /* Scale down the content boxes to fit the shorter screen height */
+        transform: scale(0.85);
+    }
+
+    /* On landscape, center the button and make it wider */
+    .button-container {
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    #start-hana-button {
+        width: 50%; /* Make the button wider, relative to its container */
+        white-space: nowrap; /* Ensure "Join Game" stays on one line */
+        display: inline-flex; /* Use flexbox for robust centering */
+        justify-content: center; /* Center text horizontally */
+        align-items: center; /* Center text vertically */
+    }
 }
